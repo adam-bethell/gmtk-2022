@@ -38,20 +38,29 @@ func show_actions(tile_name, map_pos):
 	$Highlights.clear_highlights()
 	$Highlights.show_roll(map_pos)
 	
+	var data = null
 	if tile_name.ends_with("Pawn"):
-		show_actions_pawn(map_pos)
+		data = get_actions_pawn(map_pos)
 	elif tile_name.ends_with("Knight"):
-		show_actions_knight(map_pos)
+		data = get_actions_knight(map_pos)
 	elif tile_name.ends_with("Rook"):
-		show_actions_rook(map_pos)
+		data = get_actions_rook(map_pos)
 	elif tile_name.ends_with("Bishop"):
-		show_actions_bishop(map_pos)
+		data = get_actions_bishop(map_pos)
 	elif tile_name.ends_with("Queen"):
-		show_actions_queen(map_pos)
+		data = get_actions_queen(map_pos)
 	elif tile_name.ends_with("King"):
-		show_actions_king(map_pos)
+		data = get_actions_king(map_pos)
+	
+	assert (data != null)
+	for move in data["MOVE"]:
+		$Highlights.show_move(move)
 			
-func show_actions_pawn(map_pos):
+func get_actions_pawn(map_pos):
+	var data = {}
+	data["MOVE"] = []
+	data["TAKE"] = []
+	
 	var move = Vector2(0, -1)
 	if active_unit_prefix == "Black":
 		move = Vector2(0, 1)
@@ -191,3 +200,4 @@ func get_pieces_count():
 	
 	return data
 	
+func get_checked_kings()

@@ -10,7 +10,7 @@ func _ready():
 	board_set_active_player()
 	
 func _turn_complete():
-	var result = check_winner()
+	var result = check_check()
 	if result == null:
 		swap_player()
 		board_set_active_player()
@@ -29,7 +29,15 @@ func board_set_active_player():
 	else:
 		$Board.set_active_unit_prefix("Black")
 
+func check_check():
+	var data = $Board.get_checked_kings()
+
 func check_winner():
+	var result = check_winner_ko()
+	if result != null:
+		return result
+	
+func check_winner_ko():
 	var data = $Board.get_pieces_count()
 	if data["White"] == 0:
 		return "Black"
