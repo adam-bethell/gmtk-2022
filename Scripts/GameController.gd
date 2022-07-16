@@ -1,42 +1,32 @@
 extends Node2D
 
-enum {WHITE, BLACK}
-
-var current_player = WHITE
-var in_check = false
+var current_player = "White"
 
 func _ready():
 	$Board.connect("turn_complete", self, "_turn_complete")
-	board_set_active_player()
+	$Board.set_active_unit_prefix(current_player)
 	
 func _turn_complete():
-	var result = check_check()
-	if result == null:
-		swap_player()
-		board_set_active_player()
-	else:
-		pass
+	if $Board.is_player_in_check(current_player):
+		# You lose if you're in check at the end of your turn
+		game_over()
+		return
+		
+	if check_winner_ko() == current_player:
+		winner()
+		return
+	
+	swap_player()
+	if $Board.is_player_in_check(current_player):
+		print(current_player + " in check")
+	$Board.set_active_unit_prefix(current_player)
 	
 func swap_player():
-	if current_player == WHITE:
-		current_player = BLACK
+	if current_player == "White":
+		current_player = "Black"
 	else:
-		current_player = WHITE
-		
-func board_set_active_player():
-	if current_player == WHITE:
-		$Board.set_active_unit_prefix("White")
-	else:
-		$Board.set_active_unit_prefix("Black")
+		current_player = "White"
 
-func check_check():
-	var data = $Board.get_checked_kings()
-
-func check_winner():
-	var result = check_winner_ko()
-	if result != null:
-		return result
-	
 func check_winner_ko():
 	var data = $Board.get_pieces_count()
 	if data["White"] == 0:
@@ -45,3 +35,11 @@ func check_winner_ko():
 		return "White"
 	
 	return null
+
+func game_over():
+	swap_player()
+	winner()
+
+func winner():
+	$Board.set_active_unit_prefix("VOID")
+	print(current_player + " Wins!")

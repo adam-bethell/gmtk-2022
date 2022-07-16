@@ -36,8 +36,19 @@ func is_in_bounds(map_pos):
 
 func show_actions(tile_name, map_pos):
 	$Highlights.clear_highlights()
+	
+	
 	$Highlights.show_roll(map_pos)
 	
+	var data = get_actions(tile_name, map_pos)
+	
+	assert (data != null)
+	for move in data["MOVE"]:
+		$Highlights.show_move(move)
+	for take in data["TAKE"]:
+		$Highlights.show_take(take)
+			
+func get_actions(tile_name, map_pos):
 	var data = null
 	if tile_name.ends_with("Pawn"):
 		data = get_actions_pawn(map_pos)
@@ -52,11 +63,11 @@ func show_actions(tile_name, map_pos):
 	elif tile_name.ends_with("King"):
 		data = get_actions_king(map_pos)
 	
-	assert (data != null)
-	for move in data["MOVE"]:
-		$Highlights.show_move(move)
+	return data
 			
 func get_actions_pawn(map_pos):
+	var pawn_tile = $Pieces.get_tileset().tile_get_name($Pieces.get_cellv(map_pos))
+	
 	var data = {}
 	data["MOVE"] = []
 	data["TAKE"] = []
@@ -66,7 +77,7 @@ func get_actions_pawn(map_pos):
 		move = Vector2(0, 1)
 		
 	if $Pieces.get_cellv(map_pos + move) == -1 and is_in_bounds(map_pos + move):
-		$Highlights.show_move(map_pos + move)
+		data["MOVE"].push_back(map_pos + move)
 		
 	var takeA = Vector2(1, -1)
 	var takeB = Vector2(-1, -1)
@@ -78,10 +89,12 @@ func get_actions_pawn(map_pos):
 		var tile_id = $Pieces.get_cellv(map_pos + take)
 		if tile_id != -1:
 			var tile_name = $Pieces.get_tileset().tile_get_name(tile_id)
-			if (active_unit_prefix == "White" and tile_name.begins_with("Black")) or (active_unit_prefix == "Black" and tile_name.begins_with("White")):
-				$Highlights.show_take(map_pos + take)
+			if (pawn_tile.begins_with("White") and tile_name.begins_with("Black")) or (pawn_tile.begins_with("Black") and tile_name.begins_with("White")):
+				data["MOVE"].push_back(map_pos + take)
+				
+	return data
 
-func show_actions_knight(map_pos):
+func get_actions_knight(map_pos):
 	var moves = [
 		Vector2(-1, -2),
 		Vector2(1, -2),
@@ -92,40 +105,27 @@ func show_actions_knight(map_pos):
 		Vector2(-2, 1),
 		Vector2(-2, -1)
 	]
-	show_actions_set(map_pos, moves)
+	return get_actions_set(map_pos, moves)
 	
-func show_actions_rook(map_pos):
+func get_actions_rook(map_pos):
 	var moves = [
 		Vector2(1, 0),
 		Vector2(0, 1),
 		Vector2(-1, 0),
 		Vector2(0, -1),
 	]
-	show_actions_lines(map_pos, moves)
+	return get_actions_lines(map_pos, moves)
 	
-func show_actions_bishop(map_pos):
+func get_actions_bishop(map_pos):
 	var moves = [
 		Vector2(1, 1),
 		Vector2(1, -1),
 		Vector2(-1, -1),
 		Vector2(-1, 1),
 	]
-	show_actions_lines(map_pos, moves)
+	return get_actions_lines(map_pos, moves)
 
-func show_actions_queen(map_pos):
-	var moves = [
-		Vector2(1, 0),
-		Vector2(0, 1),
-		Vector2(-1, 0),
-		Vector2(0, -1),
-		Vector2(1, 1),
-		Vector2(1, -1),
-		Vector2(-1, -1),
-		Vector2(-1, 1),
-	]
-	show_actions_lines(map_pos, moves)
-
-func show_actions_king(map_pos):
+func get_actions_queen(map_pos):
 	var moves = [
 		Vector2(1, 0),
 		Vector2(0, 1),
@@ -136,9 +136,28 @@ func show_actions_king(map_pos):
 		Vector2(-1, -1),
 		Vector2(-1, 1),
 	]
-	show_actions_set(map_pos, moves)
+	return get_actions_lines(map_pos, moves)
 
-func show_actions_lines(map_pos, moves):
+func get_actions_king(map_pos):
+	var moves = [
+		Vector2(1, 0),
+		Vector2(0, 1),
+		Vector2(-1, 0),
+		Vector2(0, -1),
+		Vector2(1, 1),
+		Vector2(1, -1),
+		Vector2(-1, -1),
+		Vector2(-1, 1),
+	]
+	return get_actions_set(map_pos, moves)
+
+func get_actions_lines(map_pos, moves):
+	var unit_tile = $Pieces.get_tileset().tile_get_name($Pieces.get_cellv(map_pos))
+	
+	var data = {}
+	data["MOVE"] = []
+	data["TAKE"] = []
+	
 	for move in moves:
 		var temp_pos = map_pos
 		
@@ -146,23 +165,33 @@ func show_actions_lines(map_pos, moves):
 		while is_in_bounds(temp_pos):
 			var tile_id = $Pieces.get_cellv(temp_pos)
 			if tile_id == -1:
-				$Highlights.show_move(temp_pos)
+				data["MOVE"].push_back(temp_pos)
 			else:
 				var tile_name = $Pieces.get_tileset().tile_get_name(tile_id)
-				if (active_unit_prefix == "White" and tile_name.begins_with("Black")) or (active_unit_prefix == "Black" and tile_name.begins_with("White")):
-					$Highlights.show_take(temp_pos)
+				if (unit_tile.begins_with("White") and tile_name.begins_with("Black")) or (unit_tile.begins_with("Black") and tile_name.begins_with("White")):
+					data["TAKE"].push_back(temp_pos)
 				break
 			temp_pos += move
 			
-func show_actions_set(map_pos, moves):
+	return data
+			
+func get_actions_set(map_pos, moves):
+	var unit_tile = $Pieces.get_tileset().tile_get_name($Pieces.get_cellv(map_pos))
+	
+	var data = {}
+	data["MOVE"] = []
+	data["TAKE"] = []
+	
 	for move in moves:
 		var tile_id = $Pieces.get_cellv(map_pos + move)
 		if tile_id == -1 and (map_pos + move):
-			$Highlights.show_move(map_pos + move)
+			data["MOVE"].push_back(map_pos + move)
 		elif tile_id != -1:
 			var tile_name = $Pieces.get_tileset().tile_get_name(tile_id)
-			if (active_unit_prefix == "White" and tile_name.begins_with("Black")) or (active_unit_prefix == "Black" and tile_name.begins_with("White")):
-				$Highlights.show_take(map_pos + move)
+			if (unit_tile.begins_with("White") and tile_name.begins_with("Black")) or (unit_tile.begins_with("Black") and tile_name.begins_with("White")):
+				data["TAKE"].push_back(map_pos + move)
+				
+	return data
 				
 func take_action (map_pos):
 	var tile_id = $Highlights.get_cellv(map_pos)
@@ -200,4 +229,51 @@ func get_pieces_count():
 	
 	return data
 	
-func get_checked_kings()
+func is_player_in_check(player):
+	var kings = get_checked_kings()
+	for king in kings:
+		var tile_id = $Pieces.get_cellv(king)
+		var tile_name = $Pieces.get_tileset().tile_get_name(tile_id)
+		if tile_name.begins_with(player):
+			return true
+	return false
+	
+func get_checked_kings():
+	var kings_in_check = []
+	
+	var white_kings = []
+	var black_kings = []
+	
+	for x in range(8):
+		for y in range(8):
+			var tile_id = $Pieces.get_cell(x, y)
+			if tile_id != -1:
+				var tile_name = $Pieces.get_tileset().tile_get_name(tile_id)
+				if tile_name == "White King":
+					white_kings.push_back(Vector2(x, y))
+				elif tile_name == "Black King":
+					black_kings.push_back(Vector2(x, y))
+					
+	for king in white_kings:
+		if is_king_checked(king, "White"):
+			kings_in_check.push_back(king)
+	for king in black_kings:
+		if is_king_checked(king, "Black"):
+			kings_in_check.push_back(king)
+		
+	return kings_in_check
+		
+func is_king_checked(king, player):
+	for x in range(8):
+		for y in range(8):
+			var map_pos = Vector2(x, y)
+			var tile_id = $Pieces.get_cellv(map_pos)
+			if tile_id != -1:
+				var tile_name = $Pieces.get_tileset().tile_get_name(tile_id)
+				if not tile_name.begins_with(player):
+					var data = get_actions(tile_name, map_pos)
+					for take in data["TAKE"]:
+						if take == king:
+							return true
+	return false
+
