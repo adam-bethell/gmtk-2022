@@ -20,8 +20,7 @@ func _mouse_down():
 	var tile_id = $Highlights.get_cellv(map_pos)
 	if tile_id != -1:
 		take_action(map_pos)
-		$Highlights.clear_highlights()
-		emit_signal("turn_complete")
+		$Highlights.clear_highlights()		
 	else:
 		tile_id = $Pieces.get_cellv(map_pos)
 		if tile_id != -1:
@@ -38,17 +37,15 @@ func is_in_bounds(map_pos):
 func show_actions(tile_name, map_pos):
 	$Highlights.clear_highlights()
 	
-	
 	$Highlights.show_roll(map_pos)
 	
 	var data = get_actions(tile_name, map_pos)
 	
-	assert (data != null)
 	for move in data["MOVE"]:
 		$Highlights.show_move(move)
 	for take in data["TAKE"]:
 		$Highlights.show_take(take)
-			
+
 func get_actions(tile_name, map_pos):
 	var data = null
 	if tile_name.ends_with("Pawn"):
@@ -185,7 +182,7 @@ func get_actions_set(map_pos, moves):
 	
 	for move in moves:
 		var tile_id = $Pieces.get_cellv(map_pos + move)
-		if tile_id == -1 and (map_pos + move):
+		if tile_id == -1 and is_in_bounds(map_pos + move):
 			data["MOVE"].push_back(map_pos + move)
 		elif tile_id != -1:
 			var tile_name = $Pieces.get_tileset().tile_get_name(tile_id)
@@ -204,14 +201,28 @@ func take_action (map_pos):
 		var piece_to_move = $Pieces.get_cellv(selected_unit_map_pos)
 		$Pieces.set_cellv(selected_unit_map_pos, -1)
 		$Pieces.set_cellv(map_pos, piece_to_move)
+		emit_signal("turn_complete")
 	elif tile_name.ends_with("Roll"):
 		roll_piece(map_pos)
 		
 func roll_piece(map_pos):
 	var pieces = ["Pawn", "Rook", "Knight", "Bishop", "Queen", "King"]
 	pieces.shuffle()
+	var old_piece = $Pieces.get_tileset().tile_get_name($Pieces.get_cellv(map_pos))
 	var new_piece = active_unit_prefix + " " + pieces[0]
+	
+	for n in range(1, 8):
+		var temp = old_piece + " Change " + str(n)
+		$Pieces.set_cellv(map_pos, $Pieces.get_tileset().find_tile_by_name(temp))
+		yield(get_tree().create_timer(0.05), "timeout")
+	
+	for n in range(7, 0, -1):
+		var temp = new_piece + " Change " + str(n)
+		$Pieces.set_cellv(map_pos, $Pieces.get_tileset().find_tile_by_name(temp))
+		yield(get_tree().create_timer(0.05), "timeout")
+		
 	$Pieces.set_cellv(map_pos, get_tileset().find_tile_by_name(new_piece))
+	emit_signal("turn_complete")
 		
 func get_pieces_count():
 	var data = {}
