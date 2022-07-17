@@ -10,6 +10,7 @@
 extents = Vector2( 128, 128 )
 
 [node name="Game" type="Node2D"]
+position = Vector2( 64, 64 )
 
 [node name="GameController" type="Node2D" parent="."]
 script = ExtResource( 5 )

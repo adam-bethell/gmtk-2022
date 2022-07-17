@@ -13,7 +13,8 @@ func set_active_unit_prefix(_active_unit_prefix):
 	active_unit_prefix = _active_unit_prefix
 	
 func _mouse_down():
-	var mouse_pos = get_global_mouse_position()
+	
+	var mouse_pos = get_local_mouse_position()
 	var map_pos = world_to_map (mouse_pos)
 	
 	var tile_id = $Highlights.get_cellv(map_pos)
